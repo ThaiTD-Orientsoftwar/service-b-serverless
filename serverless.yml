@@ -1,0 +1,46 @@
+service: service-b
+
+frameworkVersion: '2'
+
+custom:
+  queueArn:
+    Fn::Join:
+      - ''
+      - - 'arn:aws:sqs:'
+        - Ref: AWS::Region
+        - ':'
+        - Ref: AWS::AccountId
+        - ':'
+        - Fn::GetAtt:
+            - TodosQueue
+            - QueueName
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: dev
+  region: ap-southeast-1
+  environment:
+    QUEUE: ${self:service}-${opt:stage, self:provider.stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - sqs:ReceiveMessage
+            - sqs:SendMessage
+          Resource: ${self:custom.queueArn}
+functions:
+  sqsMessage:
+    handler: handler.hello
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [TodosQueue, Arn]
+          batchSize: 1
+resources:
+  Resources:
+    TodosQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:provider.environment.QUEUE}
