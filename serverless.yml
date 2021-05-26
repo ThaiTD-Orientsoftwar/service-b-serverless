@@ -32,7 +32,7 @@ provider:
           Resource: ${self:custom.queueArn}
 functions:
   sqsMessage:
-    handler: handler.hello
+    handler: handler.sqsMessage
     events:
       - sqs:
           arn:
